@@ -23,6 +23,10 @@ class PostModelTests(TestCase):
 
     def test_models_have_correct_object_names(self):
         """Проверяем, что у моделей корректно работает __str__."""
-        post = PostModelTests
-        self.assertEqual(str(post.post), self.post.text)
-        self.assertEqual(str(post.group), self.group.title)
+        post = PostModelTests.post
+        expected_post_str = post.text[:15]
+        self.assertEqual(expected_post_str, str(post))
+
+        group = PostModelTests.group
+        expected_group_str = group.title
+        self.assertEqual(expected_group_str, str(group))
