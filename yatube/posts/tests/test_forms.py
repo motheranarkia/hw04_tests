@@ -60,10 +60,6 @@ class PostFormFormTests(TestCase):
             follow=True
         )
         changed_post = Post.objects.get(id=self.post.id)
-        reverse(
-            'posts:group_posts',
-            kwargs={'slug': self.group.slug}
-        )
         self.assertEqual(changed_post.text, form_data['text'])
         self.assertEqual(changed_post.group.id, form_data['group'])
 
@@ -79,7 +75,6 @@ class PostFormFormTests(TestCase):
 
     def test_user_can_not_edit_post(self):
         """пользователь не может редактировать чужой пост"""
-        posts_count = Post.objects.count()
         form_data = {
             'text': 'Отредактированный текст',
         }
@@ -87,5 +82,10 @@ class PostFormFormTests(TestCase):
             reverse('posts:post_edit', kwargs={'post_id': self.post.id}),
             data=form_data,
             follow=True)
-        self.assertRedirects(response, '/profile/test_non_author/')
-        self.assertEqual(posts_count, Post.objects.count())
+        self.assertRedirects(response, reverse(
+            'posts:post_detail', kwargs={'post_id': self.post.id})
+        )
+        self.assertEqual(
+            Post.objects.get(author=self.non_author).text,
+            form_data['text']
+        )

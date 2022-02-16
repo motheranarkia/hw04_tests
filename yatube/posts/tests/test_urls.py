@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
+from django.urls import reverse
 
 from ..models import Group, Post
 
@@ -33,49 +34,66 @@ class PostURLTests(TestCase):
             text='Тестовый пост',
             group=cls.group,
         )
+        cls.templates_url_names = {
+            '/': 'posts/index.html',
+            f'/group/{cls.group.slug}/': 'posts/group_list.html',
+            f'/profile/{cls.user.username}/': 'posts/profile.html',
+            f'/posts/{cls.post.id}/': 'posts/post_detail.html',
+            '/create/': 'posts/create_post.html',
+            f'/posts/{cls.post.id}/edit/': 'posts/create_post.html',
+        }
 
     def test_urls_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
-        templates_url_names = {
-            '/': 'posts/index.html',
-            f'/profile/{self.author.username}/':
-                'posts/profile.html',
-            f'/posts/{self.post.pk}/edit/':
-                'posts/create_post.html',
-            f'/posts/{self.post.pk}/':
-                'posts/post_detail.html',
-            f'/group/{self.group.slug}/':
-                'posts/group_list.html',
-            '/create/': 'posts/create_post.html',
-        }
-        for reverse_name, template in templates_url_names.items():
-            with self.subTest(reverse_name=reverse_name):
-                response = self.authorized_author.get(reverse_name)
+        for adress, template in PostURLTests.templates_url_names.items():
+            with self.subTest(adress=adress):
+                response = PostURLTests.authorized_author.get(
+                    adress, follow=True
+                )
                 self.assertTemplateUsed(response, template)
 
-    def test_access_page(self):
-        """Страницы доступны."""
-        # открытые страницы
-        pages_for_all = (
+    def test_urls_guest(self):
+        """Страницы, доступные для неавторизованного клиента"""
+        urls = {
+            '/': HTTPStatus.OK.value,
+            f'/group/{self.group.slug}/': HTTPStatus.OK.value,
+            f'/profile/{self.user.username}/': HTTPStatus.OK.value,
+            f'/posts/{self.post.id}/': HTTPStatus.OK.value,
+            '/create/': HTTPStatus.FOUND,
+            f'/posts/{self.post.id}/edit/': HTTPStatus.FOUND,
+        }
+        for adress, expected in urls.items():
+            with self.subTest(adress=adress):
+                response = PostURLTests.guest_client.get(
+                    adress
+                )
+                self.assertEqual(response.status_code, expected)
+
+    def test_urls(self):
+        """Страницы, доступные для авторизованного клиента"""
+        urls = {
             '/',
             f'/group/{self.group.slug}/',
-            f'/profile/{self.author.username}/',
-            f'/posts/{self.post.pk}/',
-        )
-        for address in pages_for_all:
-            with self.subTest(address=address):
-                response = self.guest_client.get(address)
-                self.assertEqual(response.status_code, HTTPStatus.OK)
-        # только авторизованному
-        response = self.authorized_client.get('/create/')
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        # только автору
-        response = self.authorized_author.get(f'/posts/{self.post.pk}/edit/')
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        response = self.authorized_client.get(f'/posts/{self.post.pk}/edit/')
-        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+            f'/profile/{self.user.username}/',
+            f'/posts/{self.post.id}/',
+            '/create/',
+            f'/posts/{self.post.id}/edit/',
+        }
+        for adress in urls:
+            with self.subTest(adress=adress):
+                response = PostURLTests.authorized_author.get(
+                    adress, follow=True
+                )
+                self.assertEqual(response.status_code, HTTPStatus.OK.value)
 
     def test_page_404(self):
         """Несуществующая страница отвечает 404."""
         response = self.guest_client.get('/unexisting_page/')
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+
+    def test_author_can_edit_post(self):
+        """Автор может редактировать свою запись"""
+        response = self.authorized_author.get(
+            reverse('posts:post_edit', kwargs={'post_id': self.post.id}
+                    ), follow=True)
+        self.assertEqual(response.status_code, HTTPStatus.OK)

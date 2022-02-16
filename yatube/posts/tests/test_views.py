@@ -152,13 +152,13 @@ class TaskPagesTests(TestCase):
             text=self.post.text,
             group=self.group
         )
-        page_list = [
+        page_list = (
             reverse('posts:index'),
             reverse(
                 'posts:group_posts', kwargs={'slug': self.group.slug}),
             reverse(
                 'posts:profile', kwargs={'username': self.user.username})
-        ]
+        )
         for object in page_list:
             with self.subTest(object=object):
                 response = self.authorized_client.get(object)
