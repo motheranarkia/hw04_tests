@@ -1,4 +1,3 @@
-from audioop import reverse
 from http import HTTPStatus
 
 from django.test import TestCase, Client
