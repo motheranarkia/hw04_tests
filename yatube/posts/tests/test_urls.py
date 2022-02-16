@@ -23,6 +23,10 @@ class PostURLTests(TestCase):
         cls.author = User.objects.create_user(username='test_author')
         cls.authorized_author = Client()
         cls.authorized_author.force_login(cls.author)
+        # авторизованный клиент не-автор
+        cls.non_author = User.objects.create_user(username='test_non_author')
+        cls.authorized_non_author_client = Client()
+        cls.authorized_non_author_client.force_login(cls.non_author)
 
         cls.group = Group.objects.create(
             title='Тестовая группа',
@@ -97,3 +101,12 @@ class PostURLTests(TestCase):
             reverse('posts:post_edit', kwargs={'post_id': self.post.id}
                     ), follow=True)
         self.assertEqual(response.status_code, HTTPStatus.OK)
+
+    def test_non_author_can_not_edit_post(self):
+        """Posts: Проверка защиты от редактирования записи не автором"""
+        response = self.authorized_non_author_client.get(
+            reverse('posts:post_edit', kwargs={'post_id': self.post.id}
+                    ), follow=True)
+        self.assertRedirects(
+            response,
+            reverse('posts:profile', kwargs={'username': self.non_author}))

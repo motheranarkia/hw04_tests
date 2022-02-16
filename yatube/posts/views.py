@@ -51,7 +51,7 @@ def profile(request, username):
 
 
 def post_detail(request, post_id):
-    post = get_object_or_404(Post, pk=post_id)
+    post = get_object_or_404(Post, id=post_id)
     username_obj = User.objects.get(username=post.author)
     posts_counter = username_obj.posts.count()
     template = 'posts/post_detail.html'
