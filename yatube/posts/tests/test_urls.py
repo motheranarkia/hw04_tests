@@ -103,7 +103,7 @@ class PostURLTests(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_non_author_can_not_edit_post(self):
-        """Posts: Проверка защиты от редактирования записи не автором"""
+        """Не-автор не может редактировать запись"""
         response = self.authorized_non_author_client.get(
             reverse('posts:post_edit', kwargs={'post_id': self.post.id}
                     ), follow=True)
