@@ -74,3 +74,20 @@ class PostFormFormTests(TestCase):
             follow=True)
         self.assertRedirects(response, '/auth/login/?next=/create/')
         self.assertEqual(posts_count, Post.objects.count())
+
+        def test_user_can_not_edit_post(self):
+            """пользователь не может редактировать чужой пост"""
+        form_data = {
+            'text': 'Измененный тестовый пост',
+        }
+        response = self.authorized_non_author.post(
+            reverse('posts:post_edit', kwargs={'post_id': self.post.id}),
+            data=form_data,
+            follow=True)
+        self.assertRedirects(response, reverse(
+            'posts:profile', kwargs={'username': self.non_author})
+        )
+        self.assertNotEqual(
+            Post.objects.get(id=self.post.id).text,
+            form_data['text']
+        )

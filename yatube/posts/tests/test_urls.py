@@ -2,7 +2,6 @@ from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
-from django.urls import reverse
 
 from ..models import Group, Post
 
@@ -94,19 +93,3 @@ class PostURLTests(TestCase):
         """Несуществующая страница отвечает 404."""
         response = self.guest_client.get('/unexisting_page/')
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-
-    def test_author_can_edit_post(self):
-        """Автор может редактировать свою запись"""
-        response = self.authorized_author.get(
-            reverse('posts:post_edit', kwargs={'post_id': self.post.id}
-                    ), follow=True)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-
-    def test_non_author_can_not_edit_post(self):
-        """Не-автор не может редактировать запись"""
-        response = self.authorized_non_author_client.get(
-            reverse('posts:post_edit', kwargs={'post_id': self.post.id}
-                    ), follow=True)
-        self.assertRedirects(
-            response,
-            reverse('posts:profile', kwargs={'username': self.non_author}))
