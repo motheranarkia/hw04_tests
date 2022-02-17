@@ -85,7 +85,7 @@ class PostFormFormTests(TestCase):
         self.assertRedirects(response, reverse(
             'posts:profile', kwargs={'username': self.non_author})
         )
-        self.assertNotEqual(
+        self.assertEqual(
             Post.objects.get(id=self.post.id).text,
-            form_data['text']
+            PostFormFormTests.text
         )

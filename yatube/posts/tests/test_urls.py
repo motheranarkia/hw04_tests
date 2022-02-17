@@ -65,13 +65,13 @@ class PostURLTests(TestCase):
     def test_urls_guest(self):
         """Страницы, доступные для неавторизованного клиента"""
         urls = {
-            reverse('posts:index'): HTTPStatus.OK.value,
+            reverse('posts:index'): HTTPStatus.OK,
             reverse('posts:group_posts',
                     kwargs={'slug': 'test_slug'}): HTTPStatus.OK,
             reverse('posts:profile',
-                    kwargs={'username': self.author}): HTTPStatus.OK.value,
+                    kwargs={'username': self.author}): HTTPStatus.OK,
             reverse('posts:post_detail',
-                    kwargs={'post_id': self.post.id}): HTTPStatus.OK.value,
+                    kwargs={'post_id': self.post.id}): HTTPStatus.OK,
             reverse('posts:create_post'): HTTPStatus.FOUND,
             reverse('posts:post_edit',
                     kwargs={'post_id': self.post.id}): HTTPStatus.FOUND,
