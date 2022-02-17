@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
+from django.urls import reverse
 
 from ..models import Group, Post
 
@@ -37,18 +38,24 @@ class PostURLTests(TestCase):
             text='Тестовый пост',
             group=cls.group,
         )
-        cls.templates_url_names = {
-            '/': 'posts/index.html',
-            f'/group/{cls.group.slug}/': 'posts/group_list.html',
-            f'/profile/{cls.user.username}/': 'posts/profile.html',
-            f'/posts/{cls.post.id}/': 'posts/post_detail.html',
-            '/create/': 'posts/create_post.html',
-            f'/posts/{cls.post.id}/edit/': 'posts/create_post.html',
-        }
 
     def test_urls_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
-        for adress, template in PostURLTests.templates_url_names.items():
+        templates_url_names = {
+            reverse('posts:index'): 'posts/index.html',
+            reverse('posts:group_posts',
+                    kwargs={'slug': self.group.slug}): 'posts/group_list.html',
+            reverse('posts:profile',
+                    kwargs={'username': self.author}): 'posts/profile.html',
+            reverse(
+                'posts:post_detail',
+                kwargs={'post_id': self.post.id}): 'posts/post_detail.html',
+            reverse(
+                'posts:post_edit',
+                kwargs={'post_id': self.post.id}): 'posts/create_post.html',
+            reverse('posts:create_post'): 'posts/create_post.html',
+        }
+        for adress, template in templates_url_names.items():
             with self.subTest(adress=adress):
                 response = PostURLTests.authorized_author.get(
                     adress, follow=True
@@ -58,36 +65,42 @@ class PostURLTests(TestCase):
     def test_urls_guest(self):
         """Страницы, доступные для неавторизованного клиента"""
         urls = {
-            '/': HTTPStatus.OK.value,
-            f'/group/{self.group.slug}/': HTTPStatus.OK.value,
-            f'/profile/{self.user.username}/': HTTPStatus.OK.value,
-            f'/posts/{self.post.id}/': HTTPStatus.OK.value,
-            '/create/': HTTPStatus.FOUND,
-            f'/posts/{self.post.id}/edit/': HTTPStatus.FOUND,
+            reverse('posts:index'): HTTPStatus.OK.value,
+            reverse('posts:group_posts',
+                    kwargs={'slug': 'test_slug'}): HTTPStatus.OK,
+            reverse('posts:profile',
+                    kwargs={'username': self.author}): HTTPStatus.OK.value,
+            reverse('posts:post_detail',
+                    kwargs={'post_id': self.post.id}): HTTPStatus.OK.value,
+            reverse('posts:create_post'): HTTPStatus.FOUND,
+            reverse('posts:post_edit',
+                    kwargs={'post_id': self.post.id}): HTTPStatus.FOUND,
         }
         for adress, expected in urls.items():
             with self.subTest(adress=adress):
-                response = PostURLTests.guest_client.get(
-                    adress
-                )
+                response = PostURLTests.guest_client.get(adress)
                 self.assertEqual(response.status_code, expected)
 
     def test_urls(self):
         """Страницы, доступные для авторизованного клиента"""
         urls = {
-            '/',
-            f'/group/{self.group.slug}/',
-            f'/profile/{self.user.username}/',
-            f'/posts/{self.post.id}/',
-            '/create/',
-            f'/posts/{self.post.id}/edit/',
+            reverse('posts:index'): HTTPStatus.OK,
+            reverse('posts:group_posts',
+                    kwargs={'slug': 'test_slug'}): HTTPStatus.OK,
+            reverse('posts:profile',
+                    kwargs={'username': self.author}): HTTPStatus.OK,
+            reverse(
+                'posts:post_detail',
+                kwargs={'post_id': self.post.id}): HTTPStatus.OK,
+            reverse('posts:create_post'): HTTPStatus.OK,
+            reverse(
+                'posts:post_edit',
+                kwargs={'post_id': self.post.id}): HTTPStatus.OK,
         }
-        for adress in urls:
+        for adress, expected in urls.items():
             with self.subTest(adress=adress):
-                response = PostURLTests.authorized_author.get(
-                    adress, follow=True
-                )
-                self.assertEqual(response.status_code, HTTPStatus.OK.value)
+                response = PostURLTests.authorized_author.get(adress)
+                self.assertEqual(response.status_code, expected)
 
     def test_page_404(self):
         """Несуществующая страница отвечает 404."""

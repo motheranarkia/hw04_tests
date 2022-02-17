@@ -9,10 +9,10 @@ class StaticURLTests(TestCase):
         self.guest_client = Client()
 
     def test_about_pages_access_by_name(self):
-        pages = [
+        pages = (
             reverse("about:author"),
             reverse("about:tech")
-        ]
+        )
         for page in pages:
             with self.subTest():
                 response = self.guest_client.get(page)

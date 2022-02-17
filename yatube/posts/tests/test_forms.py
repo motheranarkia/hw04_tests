@@ -2,8 +2,6 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 
-# from yatube.posts.views import create_post
-
 from ..models import Group, Post
 
 User = get_user_model()
@@ -75,8 +73,8 @@ class PostFormFormTests(TestCase):
         self.assertRedirects(response, '/auth/login/?next=/create/')
         self.assertEqual(posts_count, Post.objects.count())
 
-        def test_user_can_not_edit_post(self):
-            """пользователь не может редактировать чужой пост"""
+    def test_user_can_not_edit_post(self):
+        """пользователь не может редактировать чужой пост"""
         form_data = {
             'text': 'Измененный тестовый пост',
         }
