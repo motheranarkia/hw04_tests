@@ -87,5 +87,5 @@ class PostFormFormTests(TestCase):
         )
         self.assertEqual(
             Post.objects.get(id=self.post.id).text,
-            PostFormFormTests.text
+            PostFormFormTests.post.text
         )
