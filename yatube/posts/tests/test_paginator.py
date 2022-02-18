@@ -50,8 +50,8 @@ class PaginatorViewsTest(TestCase):
     def test_group_list_first_page_contains_ten_records(self):
         response = (
             self.authorized_client.get(
-                reverse('posts:group_posts',
-                        kwargs={'slug': 'test_group_slug'})
+                reverse('posts:group_posts', kwargs={'slug':
+                        'test_group_slug'})
             )
         )
         self.assertEqual(len(response.context['page_obj']), 10)
@@ -59,8 +59,8 @@ class PaginatorViewsTest(TestCase):
     def test_group_list_second_page_contains_three_records(self):
         response = (
             self.authorized_client.get(
-                reverse('posts:group_posts',
-                        kwargs={'slug': 'test_group_slug'}),
+                reverse('posts:group_posts', kwargs={'slug':
+                        'test_group_slug'}),
                 {'page': 2},
             )
         )
@@ -69,17 +69,16 @@ class PaginatorViewsTest(TestCase):
     def test_profile_first_page_contains_ten_records(self):
         response = (
             self.authorized_client.get(
-                reverse('posts:profile',
-                        kwargs={'username': 'posts_author'})
-            )
+                reverse('posts:profile', kwargs={'username':
+                        'posts_author'}))
         )
         self.assertEqual(len(response.context['page_obj']), 10)
 
     def test_profile_second_page_contains_three_records(self):
         response = (
             self.authorized_client.get(
-                reverse('posts:profile',
-                        kwargs={'username': 'posts_author'}),
+                reverse('posts:profile', kwargs={'username':
+                        'posts_author'}),
                 {'page': 2},
             )
         )
