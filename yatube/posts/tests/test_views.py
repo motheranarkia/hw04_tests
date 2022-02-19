@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 from django import forms
+from django.db.models.fields.files import ImageFieldFile
+# from django.core.files.uploadedfile import SimpleUploadedFile
 
 from ..models import Post, Group
 
@@ -83,6 +85,7 @@ class TaskPagesTests(TestCase):
         self.assertEqual(post.text, self.post.text)
         self.assertEqual(post.group, self.post.group)
         self.assertEqual(post.author, self.author)
+        # self.assertEqual(context.image, posts.image)
 
     def test_index_correct_context(self):
         """Шаблон index сформирован с правильным контекстом."""
@@ -165,3 +168,17 @@ class TaskPagesTests(TestCase):
                 self.assertIn(
                     new_post, response.context['page_obj']
                 )
+
+    def test_post_image_context(self):
+        list = (
+            reverse('posts:index'),
+            reverse(
+                'posts:group_posts', kwargs={'slug': self.group.slug}),
+            reverse(
+                'posts:profile', kwargs={'username': self.author.username})
+        )
+        for page_obj in list:
+            with self.subTest(page=page_obj):
+                response = self.authorized_author.get(page_obj)
+                image = response.context["page_obj"][0].image
+                self.assertIsInstance(image, ImageFieldFile)

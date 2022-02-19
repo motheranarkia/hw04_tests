@@ -1,12 +1,19 @@
+import tempfile
+
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.conf import settings
 
 from ..models import Group, Post
+from ..forms import PostForm
 
 User = get_user_model()
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostFormFormTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -23,6 +30,7 @@ class PostFormFormTests(TestCase):
             author=cls.author,
             group=cls.group,
         )
+        cls.form = PostForm()
 
     def setUp(self):
         self.guest_client = Client()
@@ -33,20 +41,30 @@ class PostFormFormTests(TestCase):
 
     def test_create_post(self):
         """при отправке валидной формы создаётся новая запись."""
-        posts_count = Post.objects.count()
+        small_gif = (b'\x47\x49\x46\x38\x39\x61\x02\x00'
+                     b'\x01\x00\x80\x00\x00\x00\x00\x00'
+                     b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+                     b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+                     b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+                     b'\x0A\x00\x3B')
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif')
         form_data = {
-            'text': 'Новый пост',
-            'group': self.group.id,
+            'text': 'Тестовый текст',
+            'image': uploaded,
         }
+        posts_count = Post.objects.count()
         self.authorized_author.post(
             reverse('posts:create_post'),
             data=form_data,
             follow=True
         )
-        post = Post.objects.first()
         self.assertEqual(Post.objects.count(), posts_count + 1)
-        self.assertEqual(post.text, form_data['text'])
-        self.assertEqual(post.group.id, form_data['group'])
+        self.assertTrue(Post.objects.filter(
+                        text='Тестовый текст',
+                        image='posts/small.gif').exists())
 
     def test_edit_post(self):
         """при отправке валидной формы происходит изменение поста."""
